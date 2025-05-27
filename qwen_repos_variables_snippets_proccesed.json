@@ -9,9 +9,9 @@
       "anonymized_code": "def update_pop_live_status(var_1: str) -> None:\n    popup_status_label_live.configure(var_1=_(var_1))\n",
       "lines_processed": 2,
       "total_lines": 1206,
-      "llm_code": "def update_pop_live_status(label_text: str) -> None:\n    popup_status_label_live.configure(label_text=_(label_text))\n",
+      "llm_code": "def update_pop_live_status(status_text: str) -> None:\n    popup_status_label_live.configure(status_text=_(status_text))\n",
       "llm_variables": [
-        "label_text"
+        "status_text"
       ]
     },
     {
@@ -24,9 +24,9 @@
       "anonymized_code": "def get_temp_frame_paths(var_1: str) -> List[str]:\n    var_2 = get_temp_directory_path(var_1)\n    return glob.glob((os.path.join(glob.escape(var_2), \"*.png\")))\n",
       "lines_processed": 3,
       "total_lines": 209,
-      "llm_code": "def get_temp_frame_paths(directory: str) -> List[str]:\n    temp_dir = get_temp_directory_path(directory)\n    return glob.glob(os.path.join(glob.escape(temp_dir), \"*.png\"))",
+      "llm_code": "def get_temp_frame_paths(folder_path: str) -> List[str]:\n    temp_dir = get_temp_directory_path(folder_path)\n    return glob.glob((os.path.join(glob.escape(temp_dir), \"*.png\")))\n",
       "llm_variables": [
-        "directory",
+        "folder_path",
         "temp_dir"
       ]
     },
@@ -40,11 +40,8 @@
       "anonymized_code": "def apply_color_transfer(var_1, var_2):\n    \"\"\"\n    Apply color transfer from var_2 to var_1 image\n    \"\"\"\n    var_1 = cv2.cvtColor(var_1, cv2.COLOR_BGR2LAB).astype(\"float32\")\n",
       "lines_processed": 5,
       "total_lines": 622,
-      "llm_code": "def apply_color_transfer(image, target_image):\n    image = cv2.cvtColor(image, cv2.COLOR_BGR2LAB).astype(\"float32\")\n    return image",
-      "llm_variables": [
-        "image",
-        "target_image"
-      ]
+      "llm_code": null,
+      "llm_variables": null
     },
     {
       "file_path": "face_enhancer.py",
@@ -59,13 +56,13 @@
       "anonymized_code": "def process_image(var_1: str, var_2: str, var_3: str) -> None:\n    var_4 = cv2.imread(var_2)\n    var_5 = process_frame(None, var_4)\n    cv2.imwrite(var_3, var_5)\n",
       "lines_processed": 4,
       "total_lines": 130,
-      "llm_code": "def process_image(image_path: str, output_path: str, processed_image: str) -> None:\n    image = cv2.imread(output_path)\n    processed = process_frame(None, image)\n    cv2.imwrite(processed_image, processed)",
+      "llm_code": "def process_image(image_path: str, output_path: str, config: str) -> None:\n    image = cv2.imread(output_path)\n    processed_image = process_frame(None, image)\n    cv2.imwrite(config, processed_image)",
       "llm_variables": [
         "image_path",
         "output_path",
-        "processed_image",
+        "config",
         "image",
-        "processed"
+        "processed_image"
       ]
     },
     {
@@ -79,11 +76,11 @@
       "anonymized_code": "def get_video_frame(var_1: str, var_2: int = 0) -> Any:\n    var_3 = cv2.VideoCapture(var_1)\n\n    # Set MJPEG format to ensure correct color space handling\n    var_3.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))\n",
       "lines_processed": 5,
       "total_lines": 32,
-      "llm_code": "def get_video_frame(video_path: str, frame_index: int = 0) -> Any:\n    video_capture = cv2.VideoCapture(video_path)\n\n    # Set MJPEG format to ensure correct color space handling\n    video_capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*\"MJPG\"))",
+      "llm_code": "def get_video_frame(video_path: str, frame_index: int = 0) -> Any:\n    cap = cv2.VideoCapture(video_path)\n\n    # Set MJPEG format to ensure correct color space handling\n    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*\"MJPG\"))",
       "llm_variables": [
         "video_path",
         "frame_index",
-        "video_capture"
+        "cap"
       ]
     },
     {
@@ -113,7 +110,7 @@
       "anonymized_code": "def find_cluster_centroids(var_1, var_2=10) -> Any:\n    var_3 = []\n    var_4 = []\n    var_5 = range(1, var_2+1)\n\n",
       "lines_processed": 5,
       "total_lines": 32,
-      "llm_code": "def find_cluster_centroids(data, max_iterations=10):\n    centroids = []\n    distances = []\n    iterations = range(1, max_iterations+1)\n",
+      "llm_code": "def find_cluster_centroids(data, max_iterations=10) -> Any:\n    centroids = []\n    distances = []\n    iterations = range(1, max_iterations+1)\n",
       "llm_variables": [
         "data",
         "max_iterations",

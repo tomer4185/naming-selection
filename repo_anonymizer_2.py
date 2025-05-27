@@ -129,22 +129,22 @@ def process_repo(
                     logger.info(f"Skipped {rel} - empty snippet")
                     continue
 
-                vars_ = extract_variables_from_code(snippet)
-                if not vars_:
+                vars = extract_variables_from_code(snippet)
+                if not vars:
                     logger.info(f"Skipped {rel} - no variables found in snippet")
                     continue
 
-                anon = replace_variables_in_code(snippet, vars_)
+                anon = replace_variables_in_code(snippet, vars)
                 info = {
                     'file_path': rel,
                     'code': snippet,
-                    'variables': vars_,
+                    'variables': vars,
                     'anonymized_code': anon,
                     'lines_processed': len(snippet.splitlines()),
                     'total_lines': total
                 }
                 results.append(info)
-                logger.info(f"Processed {rel} - {len(vars_)} vars in snippet")
+                logger.info(f"Processed {rel} - {len(vars)} vars in snippet")
             except Exception as e:
                 logger.error(f"Error processing {path}: {e}")
     return results

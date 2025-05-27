@@ -3,10 +3,12 @@ import json
 import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+import re
+
 
 _models: dict = {
     "qwen": "Qwen/Qwen3-8B",
-    "llama": "meta-llama/Llama-2-7b-chat-hf"
+    "llama": "meta-llama/Llama-3.1-8B-Instruct"
 }
 
 def _parse_json(raw: str):
@@ -27,13 +29,28 @@ def _parse_json(raw: str):
 
     snippet = raw[:end+1]
     snippet = snippet.replace("'", '\"')
-
-    print(f"Parsing snippet: {snippet}")
     
     try:
         return json.loads(snippet)
     except json.JSONDecodeError:
         return None
+    
+
+
+def _regex_extract_variables(raw: str):
+    """
+    Look for the first occurrence of
+      'variable': ['a', ...]  or  'variables': ["a", ...]
+    and return the list of items inside the brackets.
+    """
+    # Match either 'variable' or 'variables', then colon, then [ ... ]
+    pattern = r"""['"]variable(?:s)?['"]\s*:\s*\[\s*([^\]]*?)\s*\]"""
+    m = re.search(pattern, raw)
+    if not m:
+        return []
+    inside = m.group(1)
+    # Now pull out each quoted item
+    return re.findall(r"""['"]([^'"]+)['"]""", inside)
 
 class SnippetDataset(Dataset):
     def __init__(self, data: dict):
@@ -64,7 +81,7 @@ def add(var_1, var_2):
     return var_3
 ```
 Output:
-{"full_code": "def add(a, b):\n    return a + b", "variables": ["a", "b"]}
+{"full_code": "def add(a, b):\n    result = a + b\n    return result", "variables": ["a", "b", "result"]}
 
 Now process:
 ```python
@@ -93,7 +110,7 @@ Now process:
             tokenizer=self.tokenizer,
             trust_remote_code=True,
             device_map='auto',
-            max_new_tokens=512,
+            max_new_tokens=256,
             return_full_text=False  # to avoid repeating the input text
         )
 
@@ -107,10 +124,11 @@ Now process:
         @return: Tuple of (new_code, new_variables), None if failed.
         """
         prompt = self.PROMPT_TEMPLATE  + code + "\n```\n\Output:\n{'full_code': "  # Engage the LLM to generate a JSON output
-        for _ in range(max_retries + 1):
+        print(f"Code: {code}")
+        for i in range(max_retries + 1):
             result = self.pipe(prompt, num_return_sequences=1)[0]['generated_text']
             parsed = _parse_json(result)
-            print(f"Code: {code}\nLLM output: {result}\nParsed: {parsed}")
+            print(f"Parsed {i + 1}: {parsed}")
             if parsed and 'full_code' in parsed and 'variables' in parsed:
                 if len(parsed['variables']) == expected_count:
                     return parsed['full_code'], parsed['variables']
@@ -119,6 +137,18 @@ Now process:
             else:
                 print(f"LLM output did not match expected format. Retrying...")
             # If not matched, retry
+
+        # Fallback: try to extract variables from the raw output instead of JSON parsing
+        fallback_vars = _regex_extract_variables(result)
+        if len(fallback_vars) == expected_count:
+            print(f"Fallback extraction succeeded: {fallback_vars}")
+            # substitute var_1, var_2, … in the anonymized code
+            full_code = code
+            for idx, name in enumerate(fallback_vars, start=1):
+                full_code = re.sub(rf"\bvar_{idx}\b", name, full_code)
+            return full_code, fallback_vars
+        else:
+            print(f"Fallback extraction failed: expected {expected_count} variables, but got {len(fallback_vars)}.")
         return None, None
 
 
@@ -126,17 +156,16 @@ if __name__ == '__main__':
     import os
     import argparse
     parser = argparse.ArgumentParser()
-    # parser.add_argument('--input', '-i', required=True, help='Input JSON file', type=str)
-    parser.add_argument('--input', '-i', required=False, help='Input JSON file', type=str, default='repos_variables_snippets.json')
+    parser.add_argument('--input', '-i', required=True, help='Input JSON file', type=str)
     parser.add_argument('--output', '-o', required=False, help='Output JSON file', type=str)
-    parser.add_argument('--model', default="llama", type=str, choices=["qwen", "llama"])
-    parser.add_argument('--cache', default="hf_cache", type=str)
-    parser.add_argument('--batch-size', type=int, default=1)
+    parser.add_argument('--model', '-m',  default="qwen", type=str, required=False, choices=["qwen", "llama"])
+    parser.add_argument('--cache', required=False, default="hf_cache", type=str)
+    parser.add_argument('--batch-size', required=False, type=int, default=1)
     args = parser.parse_args()
     
     output = args.output if args.output else args.input.replace('.json', '_proccesed.json')
     output = args.model + '_' + output
-    # Load data, using output as checkpoint if exists
+    # Load data, using output as checkpoint if exists, in case of resuming failed attempt
     if os.path.exists(output):
         with open(output, 'r') as f:
             data = json.load(f)
