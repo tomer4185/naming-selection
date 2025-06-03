@@ -58,6 +58,10 @@ def extract_pairs(node: dict, baseline: bool) -> Tuple[List[str], List[str], Lis
     h_names = node["variables"]
     l_names = node["llm_variables"]
 
+    if not h_names or not l_names:
+        raise ValueError(f"Empty variable lists in {node['file_path']}")
+
+
     # Align by position. If lengths differ, truncate to shorter length and warn.
     k = min(len(h_names), len(l_names))
     if len(h_names) != len(l_names):
@@ -88,9 +92,13 @@ def main(json_path: pathlib.Path, baseline: bool = False):
     all_scores = []
     for repo, entries in data.items():
         for node in tqdm(entries, desc=repo):
-            human_names, llm_names, h_ctx, l_ctx = extract_pairs(node, baseline)
-            scores = pairwise_scores(human_names, llm_names, h_ctx, l_ctx)
-            all_scores.extend(scores)
+            try:
+                human_names, llm_names, h_ctx, l_ctx = extract_pairs(node, baseline)
+                scores = pairwise_scores(human_names, llm_names, h_ctx, l_ctx)
+                all_scores.extend(scores)
+            except Exception as e:
+                warnings.warn(f"Error processing {node['file_path']}: {e}")
+                continue
 
     mean_sim = statistics.mean(all_scores)
     median_sim = statistics.median(all_scores)
