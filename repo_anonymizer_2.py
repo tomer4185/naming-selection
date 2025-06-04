@@ -103,7 +103,7 @@ def process_repo(repo_dir: str, snippet_method: str, snippet_length: int) -> Lis
                 total = len(all_lines)
 
                 if snippet_method == 'random_function':
-                    snippets = get_up_to_n_function_snippets(all_lines, n_funcs=5, max_len=snippet_length)
+                    snippets = get_up_to_n_function_snippets(all_lines, n_funcs=10, max_len=snippet_length)
                     if not snippets:
                         logger.info(f"Skipped {rel} - no function snippets found")
                         continue
