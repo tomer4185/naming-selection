@@ -37,12 +37,3 @@ https://github.com/Textualize/rich/
 https://github.com/Textualize/textual/tree/main/src/textual
 https://github.com/pallets/jinja/tree/main/src/jinja2
 https://github.com/python-poetry/poetry/tree/main/src/poetry
-
-
-
-
-
-
-
-
-
