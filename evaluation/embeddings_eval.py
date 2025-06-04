@@ -2,7 +2,7 @@
 """Compute lexical‑ and context‑level similarity between human and LLM identifiers.
 
 Usage:
-    python evaluate_naming.py llama_repos_variables_snippets_proccesed.json
+    python evaluate_naming.py ../data/llama_proccesed.json
 """
 import json, argparse, pathlib, statistics, itertools, warnings
 from typing import List, Tuple

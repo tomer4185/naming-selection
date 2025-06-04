@@ -262,6 +262,6 @@ def analyze(input_json: str, output_dir: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract and plot variable naming statistics")
     parser.add_argument("-i", "--input", required=True, help="Path to input JSON file")
-    parser.add_argument("-o", "--output_dir", default="analysis_results", help="Directory to save plots")
+    parser.add_argument("-o", "--output_dir", default="../analysis_results", help="Directory to save plots")
     args = parser.parse_args()
     analyze(args.input, args.output_dir)

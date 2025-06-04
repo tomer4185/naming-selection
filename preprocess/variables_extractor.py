@@ -272,10 +272,10 @@ def export_detailed_results(extracted_data: Dict[str, Dict[str, Set[str]]], outp
 
 def main():
     parser = argparse.ArgumentParser(description='Extract variable names from Python files')
-    parser.add_argument('folder', help='Folder containing Python files')
-    parser.add_argument('-o', '--output', default='variable_analysis.json',
+    parser.add_argument('--folder', help='Folder containing Python files')
+    parser.add_argument('-o', '--output', default='../data/variable_analysis.json',
                         help='Output JSON file for the analysis results')
-    parser.add_argument('-d', '--detailed', default='variables_detailed.json',
+    parser.add_argument('-d', '--detailed', default='../data/variables_detailed.json',
                         help='Output JSON file for detailed variables by file')
     parser.add_argument('--exclude-dirs', nargs='+', default=[],
                         help='Directories to exclude (relative to the input folder)')

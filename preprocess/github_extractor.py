@@ -308,7 +308,7 @@ def main():
     parser.add_argument('-o', '--output', default='github_extracted', help='Output directory for downloaded files')
     parser.add_argument('-b', '--branch', default='main', help='Branch to download from (default: main)')
     parser.add_argument('-w', '--workers', type=int, default=3, help='Number of parallel workers (default: 3)')
-    parser.add_argument('-m', '--max-files', type=int, default=15,
+    parser.add_argument('-m', '--max-files', type=int, default=20,
                         help='Maximum number of Python files to download per repository (default: 15)')
     parser.add_argument('-s', '--single', action='store_true',
                         help='Single file mode, treats URLs as Python file URLs instead of repositories')

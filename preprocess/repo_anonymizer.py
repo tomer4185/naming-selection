@@ -145,7 +145,7 @@ def main():
                    help='Method to select code snippet')
     p.add_argument('--snippet-length', type=int, default=10,
                    help='Number of lines for snippet or max lines per function')
-    p.add_argument('-o', '--output', default='repos_variables_snippets.json', help='Output JSON file')
+    p.add_argument('-o', '--output', default='../data/anonymized_variables.json', help='Output JSON file')
     args = p.parse_args()
 
     repos = []
