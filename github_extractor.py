@@ -7,7 +7,7 @@ import logging
 import time
 import concurrent.futures
 
-# Set up logging
+# Set up logging 1
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
