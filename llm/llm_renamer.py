@@ -134,7 +134,7 @@ Now process:
                 if isinstance(parsed['variables'], list) and len(parsed['variables']) == expected_count:
                     return parsed['full_code'], parsed['variables']
                 else: 
-                    print(f"Expected {expected_count} variables, but got {len(parsed['variables'])}. Retrying...")
+                    print(f"Expected {expected_count} variables, but got variablses = {parsed['variables']}. Retrying...")
             elif len(fallback_vars) == expected_count:  # Fallback to regex extraction
                 print(f"Fallback extraction succeeded: {fallback_vars}")
                 # substitute var_1, var_2, … in the anonymized code
