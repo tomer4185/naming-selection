@@ -1,0 +1,86 @@
+{
+  "hacksider_Deep-Live-Cam": [
+    {
+      "file_path": "ui.py",
+      "code": "def update_pop_live_status(text: str) -> None:\n    popup_status_label_live.configure(text=_(text))\n",
+      "variables": [
+        "text"
+      ],
+      "anonymized_code": "def update_pop_live_status(var_1: str) -> None:\n    popup_status_label_live.configure(var_1=_(var_1))\n",
+      "lines_processed": 2,
+      "total_lines": 1206
+    },
+    {
+      "file_path": "utilities.py",
+      "code": "def get_temp_frame_paths(target_path: str) -> List[str]:\n    temp_directory_path = get_temp_directory_path(target_path)\n    return glob.glob((os.path.join(glob.escape(temp_directory_path), \"*.png\")))\n",
+      "variables": [
+        "target_path",
+        "temp_directory_path"
+      ],
+      "anonymized_code": "def get_temp_frame_paths(var_1: str) -> List[str]:\n    var_2 = get_temp_directory_path(var_1)\n    return glob.glob((os.path.join(glob.escape(var_2), \"*.png\")))\n",
+      "lines_processed": 3,
+      "total_lines": 209
+    },
+    {
+      "file_path": "face_swapper.py",
+      "code": "def apply_color_transfer(source, target):\n    \"\"\"\n    Apply color transfer from target to source image\n    \"\"\"\n    source = cv2.cvtColor(source, cv2.COLOR_BGR2LAB).astype(\"float32\")\n",
+      "variables": [
+        "source",
+        "target"
+      ],
+      "anonymized_code": "def apply_color_transfer(var_1, var_2):\n    \"\"\"\n    Apply color transfer from var_2 to var_1 image\n    \"\"\"\n    var_1 = cv2.cvtColor(var_1, cv2.COLOR_BGR2LAB).astype(\"float32\")\n",
+      "lines_processed": 5,
+      "total_lines": 622
+    },
+    {
+      "file_path": "face_enhancer.py",
+      "code": "def process_image(source_path: str, target_path: str, output_path: str) -> None:\n    target_frame = cv2.imread(target_path)\n    result = process_frame(None, target_frame)\n    cv2.imwrite(output_path, result)\n",
+      "variables": [
+        "source_path",
+        "target_path",
+        "output_path",
+        "target_frame",
+        "result"
+      ],
+      "anonymized_code": "def process_image(var_1: str, var_2: str, var_3: str) -> None:\n    var_4 = cv2.imread(var_2)\n    var_5 = process_frame(None, var_4)\n    cv2.imwrite(var_3, var_5)\n",
+      "lines_processed": 4,
+      "total_lines": 130
+    },
+    {
+      "file_path": "capturer.py",
+      "code": "def get_video_frame(video_path: str, frame_number: int = 0) -> Any:\n    capture = cv2.VideoCapture(video_path)\n\n    # Set MJPEG format to ensure correct color space handling\n    capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))\n",
+      "variables": [
+        "video_path",
+        "frame_number",
+        "capture"
+      ],
+      "anonymized_code": "def get_video_frame(var_1: str, var_2: int = 0) -> Any:\n    var_3 = cv2.VideoCapture(var_1)\n\n    # Set MJPEG format to ensure correct color space handling\n    var_3.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))\n",
+      "lines_processed": 5,
+      "total_lines": 32
+    },
+    {
+      "file_path": "predicter.py",
+      "code": "def predict_frame(target_frame: Frame) -> bool:\n    # Convert the frame to RGB before processing if color correction is enabled\n    if modules.globals.color_correction:\n        target_frame = cv2.cvtColor(target_frame, cv2.COLOR_BGR2RGB)\n        \n",
+      "variables": [
+        "target_frame"
+      ],
+      "anonymized_code": "def predict_frame(var_1: Frame) -> bool:\n    # Convert the frame to RGB before processing if color correction is enabled\n    if modules.globals.color_correction:\n        var_1 = cv2.cvtColor(var_1, cv2.COLOR_BGR2RGB)\n        \n",
+      "lines_processed": 5,
+      "total_lines": 36
+    },
+    {
+      "file_path": "cluster_analysis.py",
+      "code": "def find_cluster_centroids(embeddings, max_k=10) -> Any:\n    inertia = []\n    cluster_centroids = []\n    K = range(1, max_k+1)\n\n",
+      "variables": [
+        "embeddings",
+        "max_k",
+        "inertia",
+        "cluster_centroids",
+        "K"
+      ],
+      "anonymized_code": "def find_cluster_centroids(var_1, var_2=10) -> Any:\n    var_3 = []\n    var_4 = []\n    var_5 = range(1, var_2+1)\n\n",
+      "lines_processed": 5,
+      "total_lines": 32
+    }
+  ]
+}
