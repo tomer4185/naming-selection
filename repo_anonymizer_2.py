@@ -20,9 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 def extract_variables_from_code(code: str) -> List[str]:
-    """
-    Extract variable names from Python code string using AST
-    """
     try:
         tree = ast.parse(code)
         visitor = VariableVisitor()
@@ -35,25 +32,20 @@ def extract_variables_from_code(code: str) -> List[str]:
 
 class VariableVisitor(ast.NodeVisitor):
     def __init__(self):
-        # a list to hold names in the order we see them…
         self.variables = []
-        # …and a set to dedupe
         self._seen = set()
 
     def visit_Name(self, node):
-        # only record on assignment (Store context):
         if isinstance(node.ctx, ast.Store) and node.id not in self._seen:
             self._seen.add(node.id)
             self.variables.append(node.id)
         self.generic_visit(node)
 
     def visit_arg(self, node):
-        # record function arguments, too
         if node.arg not in self._seen:
             self._seen.add(node.arg)
             self.variables.append(node.arg)
         self.generic_visit(node)
-
 
 
 def replace_variables_in_code(code: str, variables: List[str]) -> str:
@@ -66,7 +58,6 @@ def replace_variables_in_code(code: str, variables: List[str]) -> str:
 
 
 def get_random_lines_snippet(lines: List[str], n: int) -> str:
-    # Filter out import statements
     non_import_idxs = [i for i, ln in enumerate(lines) if not re.match(r'^\s*(import|from)\b', ln)]
     if len(non_import_idxs) <= n:
         start = 0
@@ -77,32 +68,28 @@ def get_random_lines_snippet(lines: List[str], n: int) -> str:
     return ''.join(lines[start:start+n])
 
 
-def get_random_function_snippet(lines: List[str], max_len: int = 10) -> str:
-    """
-    Extract a random function snippet, but limit to max_len lines
-    """
+def get_up_to_n_function_snippets(lines: List[str], n_funcs: int = 10, max_len: int = 10) -> List[str]:
     code = ''.join(lines)
     try:
         tree = ast.parse(code)
         funcs = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
         if not funcs:
-            return ''
-        fn = random.choice(funcs)
-        start = fn.lineno - 1
-        end = getattr(fn, 'end_lineno', fn.lineno)
-        # Limit snippet to max_len lines
-        snippet_end = min(end, start + max_len)
-        return ''.join(lines[start:snippet_end])
+            return []
+
+        selected_funcs = random.sample(funcs, min(n_funcs, len(funcs)))
+        snippets = []
+        for fn in selected_funcs:
+            start = fn.lineno - 1
+            end = getattr(fn, 'end_lineno', fn.lineno)
+            snippet_end = min(end, start + max_len)
+            snippets.append(''.join(lines[start:snippet_end]))
+        return snippets
     except Exception as e:
-        logger.error(f"Error extracting function snippet: {e}")
-        return ''
+        logger.error(f"Error extracting function snippets: {e}")
+        return []
 
 
-def process_repo(
-    repo_dir: str,
-    snippet_method: str,
-    snippet_length: int
-) -> List[Dict[str, Any]]:
+def process_repo(repo_dir: str, snippet_method: str, snippet_length: int) -> List[Dict[str, Any]]:
     results = []
     for root, _, files in os.walk(repo_dir):
         for file in files:
@@ -115,36 +102,36 @@ def process_repo(
                     all_lines = f.readlines()
                 total = len(all_lines)
 
-                # Select code snippet
-                if snippet_method == 'first':
-                    snippet = ''.join(all_lines[:snippet_length])
+                if snippet_method == 'random_function':
+                    snippets = get_up_to_n_function_snippets(all_lines, n_funcs=5, max_len=snippet_length)
+                    if not snippets:
+                        logger.info(f"Skipped {rel} - no function snippets found")
+                        continue
                 elif snippet_method == 'random_lines':
                     snippet = get_random_lines_snippet(all_lines, snippet_length)
-                elif snippet_method == 'random_function':
-                    snippet = get_random_function_snippet(all_lines, snippet_length)
-                else:
-                    snippet = ''.join(all_lines[:snippet_length])
+                    snippets = [snippet]
+                else:  # 'first' or fallback
+                    snippets = [''.join(all_lines[:snippet_length])]
 
-                if not snippet.strip():
-                    logger.info(f"Skipped {rel} - empty snippet")
-                    continue
+                for snippet in snippets:
+                    if not snippet.strip():
+                        continue
+                    vars = extract_variables_from_code(snippet)
+                    if not vars:
+                        continue
 
-                vars = extract_variables_from_code(snippet)
-                if not vars:
-                    logger.info(f"Skipped {rel} - no variables found in snippet")
-                    continue
+                    anon = replace_variables_in_code(snippet, vars)
+                    info = {
+                        'file_path': rel,
+                        'code': snippet,
+                        'variables': vars,
+                        'anonymized_code': anon,
+                        'lines_processed': len(snippet.splitlines()),
+                        'total_lines': total
+                    }
+                    results.append(info)
+                    logger.info(f"Processed {rel} - {len(vars)} vars in snippet")
 
-                anon = replace_variables_in_code(snippet, vars)
-                info = {
-                    'file_path': rel,
-                    'code': snippet,
-                    'variables': vars,
-                    'anonymized_code': anon,
-                    'lines_processed': len(snippet.splitlines()),
-                    'total_lines': total
-                }
-                results.append(info)
-                logger.info(f"Processed {rel} - {len(vars)} vars in snippet")
             except Exception as e:
                 logger.error(f"Error processing {path}: {e}")
     return results
@@ -156,8 +143,8 @@ def main():
     p.add_argument('-r', '--repos', nargs='+', help='Specific repo dirs')
     p.add_argument('--snippet-method', choices=['first', 'random_lines', 'random_function'], default='random_function',
                    help='Method to select code snippet')
-    p.add_argument('--snippet-length', type=int, default=5,
-                   help='Number of lines for snippet (ignored for random_function)')
+    p.add_argument('--snippet-length', type=int, default=19,
+                   help='Number of lines for snippet or max lines per function')
     p.add_argument('-o', '--output', default='repos_variables_snippets.json', help='Output JSON file')
     args = p.parse_args()
 
@@ -178,5 +165,9 @@ def main():
         json.dump(all_data, f, indent=2)
     logger.info(f"Results saved to {args.output}")
 
+
 if __name__ == '__main__':
     main()
+
+
+
