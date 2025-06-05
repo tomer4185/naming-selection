@@ -154,7 +154,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--input', '-i', required=True, help='Input JSON file', type=str)
     parser.add_argument('--output', '-o', required=False, help='Output JSON file', type=str)
-    parser.add_argument('--model', '-m',  default="qwen", type=str, required=False, choices=["qwen", "llama"])
+    parser.add_argument('--model', '-m',  default="llama", type=str, required=False, choices=["qwen", "llama"])
     parser.add_argument('--cache', required=False, default="../hf_cache", type=str)
     parser.add_argument('--batch-size', required=False, type=int, default=1)
     args = parser.parse_args()

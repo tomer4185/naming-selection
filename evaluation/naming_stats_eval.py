@@ -202,11 +202,30 @@ def visualize_variables_styles_distribution(output_dir, model, df):
         sizes = non_zero.values.tolist()
         # Use the consistent color mapping
         pie_colors = [style_color_map[label] for label in labels]
-        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90, colors=pie_colors)
+        
+        def autopct_filter(pct):
+            return f'{pct:.1f}%' if pct > 1 else ''
+        
+        wedges, _, _ = ax.pie(
+            sizes,
+            labels=None,
+            autopct=autopct_filter,
+            startangle=90,
+            colors=pie_colors
+        )
+
+        # Add legend for style labels
+        ax.legend(
+            wedges,
+            labels,
+            title="Style",
+            loc="center left",
+            bbox_to_anchor=(1, 0.5)
+        )
         ax.set_title(t, fontsize=13)
 
     plt.tight_layout()
-    out_path = os.path.join(output_dir, f'{model}style_distribution.png')
+    out_path = os.path.join(output_dir, f"{model}style_distribution.png")
     fig.savefig(out_path)
     plt.close(fig)
 
@@ -217,8 +236,8 @@ def analyze(input_json: str, output_dir: str):
         data = json.load(f)
     
     if '_' in input_json:
-        # Assuming input_json is in the format "model_....json"
-        model = input_json.split('_')[0] + '_'
+        # Assuming input_json is in the format "path/model_....json"
+        model = os.path.basename(input_json).split('_')[0] + '_'
     else:
         model = ''
 
@@ -262,6 +281,6 @@ def analyze(input_json: str, output_dir: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract and plot variable naming statistics")
     parser.add_argument("-i", "--input", required=True, help="Path to input JSON file")
-    parser.add_argument("-o", "--output_dir", default="../analysis_results", help="Directory to save plots")
+    parser.add_argument("-o", "--output_dir", default="../analysis_results/", help="Directory to save plots")
     args = parser.parse_args()
     analyze(args.input, args.output_dir)
