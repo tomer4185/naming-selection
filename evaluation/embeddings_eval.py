@@ -47,7 +47,10 @@ def pairwise_scores(h_names: List[str], l_names: List[str], h_ctx_snips: List[st
     emb_l_c  = embed(ctx_l, CTX_MODEL)
     sim_ctx  = (emb_h_c * emb_l_c).sum(1)
 
-    return ((sim_name + sim_ctx) / 2).tolist()
+    # return ((sim_name + sim_ctx) / 2).tolist()
+    return (sim_name).tolist()
+    # todo similarity between function name and variables
+    # return (sim_ctx).tolist()
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Utility to extract aligned name pairs from JSON node
