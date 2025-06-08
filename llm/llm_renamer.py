@@ -126,29 +126,25 @@ Now process:
         prompt = self.PROMPT_TEMPLATE  + code + "\n```\n\Output:\n{'full_code': "  # Engage the LLM to generate a JSON output
         print(f"Code: {code}")
         for i in range(max_retries + 1):
+            print(f"Attempt {i + 1}")
             result = self.pipe(prompt, num_return_sequences=1)[0]['generated_text']
             parsed = _parse_json(result)
-            print(f"Parsed {i + 1}: {parsed}")
-            if parsed and 'full_code' in parsed and 'variables' in parsed:
-                if len(parsed['variables']) == expected_count:
+            fallback_vars = _regex_extract_variables(result)
+            if parsed and 'full_code' in parsed and 'variables' in parsed:  # JSON output extrection
+                if isinstance(parsed['variables'], list) and len(parsed['variables']) == expected_count:
                     return parsed['full_code'], parsed['variables']
                 else: 
-                    print(f"Expected {expected_count} variables, but got {len(parsed['variables'])}. Retrying...")
+                    print(f"Expected {expected_count} variables, but got variablses = {parsed['variables']}. Retrying...")
+            elif len(fallback_vars) == expected_count:  # Fallback to regex extraction
+                print(f"Fallback extraction succeeded: {fallback_vars}")
+                # substitute var_1, var_2, … in the anonymized code
+                full_code = code
+                for idx, name in enumerate(fallback_vars, start=1):
+                    full_code = re.sub(rf"\bvar_{idx}\b", name, full_code)
+                return full_code, fallback_vars
             else:
-                print(f"LLM output did not match expected format. Retrying...")
-            # If not matched, retry
-
-        # Fallback: try to extract variables from the raw output instead of JSON parsing
-        fallback_vars = _regex_extract_variables(result)
-        if len(fallback_vars) == expected_count:
-            print(f"Fallback extraction succeeded: {fallback_vars}")
-            # substitute var_1, var_2, … in the anonymized code
-            full_code = code
-            for idx, name in enumerate(fallback_vars, start=1):
-                full_code = re.sub(rf"\bvar_{idx}\b", name, full_code)
-            return full_code, fallback_vars
-        else:
-            print(f"Fallback extraction failed: expected {expected_count} variables, but got {len(fallback_vars)}.")
+                suffix = "" if i < max_retries else " Retrying..."
+                print(f"LLM output did not match expected format.{suffix}")
         return None, None
 
 
@@ -158,13 +154,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--input', '-i', required=True, help='Input JSON file', type=str)
     parser.add_argument('--output', '-o', required=False, help='Output JSON file', type=str)
-    parser.add_argument('--model', '-m',  default="qwen", type=str, required=False, choices=["qwen", "llama"])
-    parser.add_argument('--cache', required=False, default="hf_cache", type=str)
+    parser.add_argument('--model', '-m',  default="llama", type=str, required=False, choices=["qwen", "llama"])
+    parser.add_argument('--cache', required=False, default="../hf_cache", type=str)
     parser.add_argument('--batch-size', required=False, type=int, default=1)
     args = parser.parse_args()
     
-    output = args.output if args.output else args.input.replace('.json', '_proccesed.json')
-    output = args.model + '_' + output
+    output = args.output if args.output else 'proccesed.json'
+    output = "../data/" + args.model + '_' + output
     # Load data, using output as checkpoint if exists, in case of resuming failed attempt
     if os.path.exists(output):
         with open(output, 'r') as f:

@@ -2,3 +2,5 @@
 hf_cache/
 *.log
 github_extracted/
+*.sh
+logs/

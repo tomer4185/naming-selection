@@ -1,4 +1,0 @@
-# first copy wanted urls to txt file repos.txt
-# then run github_extractor with relevant urls - creates dowloaded_repos folder with all py files
-# then, run repo_anonymizer2 to extract wanted information to file anonymized_variables.json
-# for statistics, run variable_extractor that creates variables_detailed.json and analysis.json

@@ -143,9 +143,9 @@ def main():
     p.add_argument('-r', '--repos', nargs='+', help='Specific repo dirs')
     p.add_argument('--snippet-method', choices=['first', 'random_lines', 'random_function'], default='random_function',
                    help='Method to select code snippet')
-    p.add_argument('--snippet-length', type=int, default=19,
+    p.add_argument('--snippet-length', type=int, default=10,
                    help='Number of lines for snippet or max lines per function')
-    p.add_argument('-o', '--output', default='repos_variables_snippets.json', help='Output JSON file')
+    p.add_argument('-o', '--output', default='../data/anonymized_variables.json', help='Output JSON file')
     args = p.parse_args()
 
     repos = []
