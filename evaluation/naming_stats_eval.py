@@ -15,7 +15,10 @@ def padded_hamming_distance(s1, s2, pad_char=" "):
     return sum(c1 != c2 for c1, c2 in zip(s1, s2))
 
 def count_words(var: str) -> int:
-    if '_' in var:
+    if not var:
+        return 0
+    var = var[1:] if var.startswith('_') else var  # ignore leading underscore
+    if '_' in var: 
         return len(var.split('_'))
     parts = re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?![a-z])', var)
     return len(parts) if parts else 1
