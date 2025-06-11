@@ -332,7 +332,7 @@ def analyze(input_json: str, output_dir: str):
                         'repo': repo,
                         'type': tag,
                         'variable': v,
-                        'length': len(v.replace("_", "")), # ignore underscores in length
+                        'length': len(v.replace("_", "") if v != '_' else v), # ignore underscores in length
                         'words': count_words(v),
                         'style': detect_style(v)
                     })
