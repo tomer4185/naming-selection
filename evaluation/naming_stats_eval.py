@@ -15,7 +15,10 @@ def padded_hamming_distance(s1, s2, pad_char=" "):
     return sum(c1 != c2 for c1, c2 in zip(s1, s2))
 
 def count_words(var: str) -> int:
-    if '_' in var:
+    if not var:
+        return 0
+    var = var[1:] if var.startswith('_') else var  # ignore leading underscore
+    if '_' in var: 
         return len(var.split('_'))
     parts = re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?![a-z])', var)
     return len(parts) if parts else 1
@@ -38,6 +41,74 @@ def detect_style(var: str) -> str:
         return 'single word'
     # 6) anything else
     return 'other'
+
+def visualize_word_length_distribution(output_dir, model, df):
+    from collections import Counter
+
+    def extract_word_lengths(var):
+        # Strip leading underscores
+        var = var[1:] if var.startswith('_') else var
+
+        if '_' in var:
+            words = var.split('_')
+        else:
+            words = re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?![a-z])', var)
+            if not words:  # fallback
+                words = [var]
+        return [len(w) for w in words]
+
+    length_counter = {
+        "Original": Counter(),
+        "LLM": Counter()
+    }
+
+    for _, row in df.iterrows():
+        var = row["variable"]
+        tag = row["type"]
+        word_lengths = extract_word_lengths(var)
+        length_counter[tag].update(word_lengths)
+
+    all_lengths = sorted(set(length_counter["Original"].keys()) | set(length_counter["LLM"].keys()))
+    orig_counts = [length_counter["Original"].get(l, 0) for l in all_lengths]
+    llm_counts  = [length_counter["LLM"].get(l, 0) for l in all_lengths]
+
+    bar_width = 0.4
+    x = list(range(len(all_lengths)))
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    ax.bar([i - bar_width/2 for i in x], orig_counts, width=bar_width, label="Original", color="tab:blue")
+    ax.bar([i + bar_width/2 for i in x], llm_counts, width=bar_width, label="LLM", color="tab:orange", hatch="//")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(all_lengths)
+    ax.set_xlabel("Word Length")
+    ax.set_ylabel("Number of Words")
+    ax.set_title("Distribution of Word Lengths in Variable Names")
+    ax.legend()
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(output_dir, f"{model}word_length_distribution.png"))
+    plt.close(fig)
+
+
+def visualize_number_of_words_cdf(output_dir, model, df):
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    for name, group in df.groupby("type"):
+        word_counts = group["words"].sort_values().values
+        cdf = [i / len(word_counts) for i in range(1, len(word_counts) + 1)]
+        ax.step(word_counts, cdf, where='post', label=name)
+
+    ax.set_xlabel("Number of Words in Variable Name")
+    ax.set_ylabel("Cumulative Fraction (CDF)")
+    ax.set_title("CDF of Number of Words in Variable Names")
+    ax.legend(title="Variable Source")
+    ax.grid(True, linestyle='--', alpha=0.5)
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(output_dir, f"{model}words_cdf.png"))
+    plt.close(fig)
 
 def visualize_variables_naming_distribution(output_dir, model, df):
     grouped = df.groupby(["type", "length", "words"]).size().reset_index(name="count")
@@ -261,7 +332,7 @@ def analyze(input_json: str, output_dir: str):
                         'repo': repo,
                         'type': tag,
                         'variable': v,
-                        'length': len(v),
+                        'length': len(v.replace("_", "") if v != '_' else v), # ignore underscores in length
                         'words': count_words(v),
                         'style': detect_style(v)
                     })
@@ -274,6 +345,8 @@ def analyze(input_json: str, output_dir: str):
         return
 
     visualize_variables_naming_distribution(output_dir, model, df)
+    visualize_number_of_words_cdf(output_dir, model, df)
+    visualize_word_length_distribution(output_dir, model, df)
     visualize_variables_styles_distribution(output_dir, model, df)
     visualize_hamming_distribution(output_dir, model, distances)
     
