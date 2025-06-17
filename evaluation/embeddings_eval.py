@@ -56,7 +56,7 @@ def pairwise_scores(h_names: List[str], l_names: List[str], h_ctx_snips: List[st
 # Utility to extract aligned name pairs from JSON node
 # ────────────────────────────────────────────────────────────────────────────────
 
-def extract_pairs(node: dict, baseline: bool) -> Tuple[List[str], List[str], List[str]]:
+def extract_pairs(node: dict, baseline: str) -> Tuple[List[str], List[str], List[str]]:
     """Return (human_names, llm_names, context_snippets). Lengths are equal."""
     h_names = node["variables"]
     l_names = node["llm_variables"]
@@ -64,22 +64,33 @@ def extract_pairs(node: dict, baseline: bool) -> Tuple[List[str], List[str], Lis
     if not h_names or not l_names:
         raise ValueError(f"Empty variable lists in {node['file_path']}")
 
-
     # Align by position. If lengths differ, truncate to shorter length and warn.
     k = min(len(h_names), len(l_names))
-    if len(h_names) != len(l_names):
-        warnings.warn(f"Variable count mismatch in {node['file_path']} – truncating to {k}.")
-    h_names = h_names[:k]
-    l_names = l_names[:k]
-
     # Use 3‑line context around each var occurrence if available; fallback to full fn.
-    if baseline:
+    if baseline == "basic":
         # Anonymized code is used for baseline evaluation
          l_context = node.get("anonymized_code", "")
          # k-length list of var_i for i in 1..k to replace llm_names
          l_names = [f"var_{i+1}" for i in range(k)]
+    elif baseline == "gibberish":
+        # Gibberish code is used for baseline evaluation
+        l_context = node.get("gibberish_code", "")
+        l_names = node.get("gibberish_variables", [])
+    elif baseline == "random":
+        # Random code is used for baseline evaluation
+        l_context = node.get("random_code", "")
+        l_names = node.get("random_variables", [])
     else:
         l_context = node.get("llm_code", "")  # LLM-generated code snippet
+
+    # Align by position. If lengths differ, truncate to shorter length and warn.
+    k = min(len(h_names), len(l_names))
+    if len(h_names) != len(l_names):
+        warnings.warn(
+            f"Variable count mismatch in {node['file_path']} – truncating to {k}.")
+    h_names = h_names[:k]
+    l_names = l_names[:k]
+
     h_context = node.get("code", "")  # simplest: full snippet
     l_ctx_list = [l_context] * k
     h_ctx_list = [h_context] * k
@@ -89,8 +100,10 @@ def extract_pairs(node: dict, baseline: bool) -> Tuple[List[str], List[str], Lis
 # Main CLI
 # ────────────────────────────────────────────────────────────────────────────────
 
-def main(json_path: pathlib.Path, baseline: bool = False):
+def main(json_path: pathlib.Path, baseline: str = "basic"):
     data = json.loads(json_path.read_text())
+    # take only the first 1000 entries for faster evaluation
+    data = {repo: entries[:1] for repo, entries in data.items()}
 
     all_scores = []
     for repo, entries in data.items():
@@ -112,6 +125,6 @@ def main(json_path: pathlib.Path, baseline: bool = False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--json_file", type=pathlib.Path)
-    parser.add_argument("--baseline", type=bool, default=False)
+    parser.add_argument("--baseline_type", type=str, default="basic")
     args = parser.parse_args()
-    main(args.json_file, args.baseline)
+    main(args.json_file, args.baseline_type)
